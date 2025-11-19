@@ -29,6 +29,31 @@ commitizen = "^4.10.0"
 aws-cdk-lib = "^2.110"
 constructs = "^10.0.0"
 
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "poetry"
+update_changelog_on_bump = true
+major_version_zero = true
+
+allowed_prefixes = [
+    "feat",
+    "fix",
+    "docs",
+    "style",
+    "refactor",
+    "perf",
+    "test",
+    "chore",
+    "ci",
+]
+
+# Patrón de validación simple
+[tool.commitizen.customize]
+schema_pattern = "^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\\(\\w+\\))?!?:\\s.+"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
