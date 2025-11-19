@@ -1,0 +1,73 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# --- Testing & Quality ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# --- AWS CDK ---
+# cdk.out contiene el CloudFormation sintetizado (es generado, no se versiona)
+cdk.out/
+cdk.context.json
+
+# --- Lambda Layers & Builds ---
+# Si usamos layers locales o construimos zips de deployment
+*.zip
+.aws-sam/
+backend/functions/**/.build/
+
+# --- Node / Frontend (React) ---
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.vite/
+
+# --- LocalStack / Docker ---
+.localstack/
+docker-compose.override.yml
+localstack_data/
+
+# --- Logs & Temporary Files ---
+*.log
+*.pid
+*.seed
+*.pid.lock
+.tmp/
+tmp/
+
+# --- IDEs / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
+*~
+
+# --- VS Code ---
+# Ignoramos la carpeta completa PERO...
+.vscode/*
+
+# --- Secrets & Credentials (double-check) ---
+# Aunque ya está .env, reforzamos
+secrets.json
+credentials.json
+*.pem
+*.key
