@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -31,7 +32,7 @@ class Task(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    def to_dynamodb_item(self) -> dict:
+    def to_dynamodb_item(self) -> dict[str, Any]:
         """Convierte Task a formato DynamoDB item"""
         return {
             "PK": f"USER#{self.user_id}",
@@ -45,7 +46,7 @@ class Task(BaseModel):
         }
 
     @classmethod
-    def from_dynamodb_item(cls, item: dict) -> "Task":
+    def from_dynamodb_item(cls, item: dict[str, Any]) -> "Task":
         """Crea Task desde item de DynamoDB"""
         return cls(
             task_id=item["task_id"],

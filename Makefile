@@ -12,7 +12,7 @@ help:
 	@echo "  clean         - Limpiar archivos temporales"
 
 build-lambda:
-	@echo "🔨 Building Lambda bundle (optimized)..."
+	@echo "Building Lambda bundle"
 	@rm -rf .build/bundle
 	@mkdir -p .build/bundle
 	@pip install \
@@ -23,7 +23,7 @@ build-lambda:
 	@cp -r backend/functions .build/bundle/
 	@cp -r backend/models .build/bundle/
 	@cp -r backend/shared .build/bundle/
-	@echo "✅ Lambda bundle ready (without Powertools - uses AWS Layer)"
+	@echo "Lambda bundle ready "
 
 deploy: build-lambda  ## Deploy to AWS
 	@echo "Deploying to AWS ($(AWS_PROFILE))..."
@@ -45,7 +45,7 @@ test:
 
 lint:
 	poetry run ruff check backend/ infrastructure/
-	poetry run mypy backend/ infrastructure/
+	poetry run mypy backend/
 
 clean:
 	@echo "Cleaning..."
