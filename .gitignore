@@ -83,3 +83,6 @@ backend/functions/**/.build/
 cdk.out/
 cdk.context.json
 .cdk.staging/
+
+# Lambda build
+.build/

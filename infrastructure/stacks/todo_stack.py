@@ -1,10 +1,14 @@
+from pathlib import Path
+
 from aws_cdk import (
     CfnOutput,
+    Duration,
     RemovalPolicy,
     Stack,
     aws_apigateway as apigateway,
     aws_cognito as cognito,
     aws_dynamodb as dynamodb,
+    aws_lambda as lambda_,
 )
 from constructs import Construct
 
@@ -14,7 +18,7 @@ class TodoStack(Stack):
         super().__init__(scope=scope, id=id, **kwargs)
 
         # ========================================================================================================
-        # Dynamo DB table definition
+        # DynamoDB Table
 
         table = dynamodb.Table(
             self,
@@ -33,7 +37,7 @@ class TodoStack(Stack):
         self.table = table
 
         # ========================================================================================================
-        # Cognito User Pool definition
+        # Cognito User Pool
 
         user_pool = cognito.UserPool(
             self,
@@ -107,42 +111,38 @@ class TodoStack(Stack):
         )
 
         self.api = api
+        task_resource = self.api.root.add_resource("tasks")
 
         # ========================================================================================================
-        # Cognito Authorizer for API
+        # Lambda Function (with bundled dependencies)
 
-        # authorizer = apigateway.CognitoUserPoolsAuthorizer(
-        #     self,
-        #     "TODOAuthorizer",
-        #     cognito_user_pools=[self.user_pool],
-        #     authorizer_name="CognitoAuthorizer",
-        #     identity_source="method.request.header.Authorization",
-        # )
+        bundle_path = Path(__file__).parent.parent.parent / ".build" / "bundle"
 
-        # self.authorizer = authorizer
+        create_task_fn = lambda_.Function(
+            self,
+            "CreateTaskFunction",
+            function_name="todo-create-task",
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            handler="functions.tasks.create.handler",
+            code=lambda_.Code.from_asset(str(bundle_path)),
+            environment={
+                "TABLE_NAME": table.table_name,
+                "POWERTOOLS_SERVICE_NAME": "todo-api",
+                "LOG_LEVEL": "INFO",
+            },
+            timeout=Duration.seconds(10),
+            memory_size=256,
+        )
+
+        # Grant DynamoDB permissions
+        table.grant_write_data(create_task_fn)
 
         # ========================================================================================================
-        # TODO Endpoint placeholder for first deploy
-
-        task_resource = api.root.add_resource("tasks")
-
-        # /get Tasks
+        # API Integration
 
         task_resource.add_method(
-            "GET",
-            apigateway.MockIntegration(
-                integration_responses=[
-                    apigateway.IntegrationResponse(
-                        status_code="200",
-                        response_templates={
-                            "application/json": '{"message": "Tasks endpoint ready. Lambdas pending Story 1.3"}'
-                        },
-                    )
-                ],
-                passthrough_behavior=apigateway.PassthroughBehavior.NEVER,
-                request_templates={"application/json": '{"statusCode": 200}'},
-            ),
-            method_responses=[apigateway.MethodResponse(status_code="200")],
+            "POST",
+            apigateway.LambdaIntegration(create_task_fn),  # type: ignore
         )
 
         # ========================================================================================================
