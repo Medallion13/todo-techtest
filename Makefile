@@ -8,7 +8,7 @@ PYTHON := poetry run python
 PYTEST := poetry run pytest
 RUFF := poetry run ruff
 MYPY := poetry run mypy
-CDK := cdk
+CDK := cdklocal
 
 # LocalStack
 LOCALSTACK_ENDPOINT := http://localhost:4566
@@ -81,7 +81,8 @@ localstack-logs: ## Ver logs de LocalStack
 
 localstack-reset: ## Destruir y recrear LocalStack
 	docker-compose down -v
-	rm -rf localstack_data/*
+	docker run --rm -v $(PWD)/localstack_data:/data alpine sh -c "rm -rf /data/*"
+	docker-compose up -d
 
 localstack-status: ## Verificar status de servicios LocalStack
 	@echo "Status de LocalStack:"
@@ -95,13 +96,20 @@ localstack-status: ## Verificar status de servicios LocalStack
 synth: ## Sintetizar CloudFormation template
 	cd infrastructure && $(CDK) synth
 
-deploy: localstack-up ## Desplegar stack a LocalStack
-	cd infrastructure && $(CDK) bootstrap aws://000000000000/$(AWS_REGION) \
-		--profile localstack || true
-	cd infrastructure && $(CDK) deploy --all \
-		--require-approval never \
-		--profile localstack \
-		--outputs-file ../cdk-outputs.json
+deploy: build-lambda localstack-up ## Desplegar stack a LocalStack
+	@echo "Desplegando a LocalStack..."
+	cd infrastructure && \
+		CDK_DISABLE_LEGACY_EXPORT_WARNING=1 \
+		CDK_DISABLE_NOTICES=true \
+		$(CDK) bootstrap || true
+	cd infrastructure && \
+		CDK_DISABLE_LEGACY_EXPORT_WARNING=1 \
+		CDK_DISABLE_NOTICES=true \
+		$(CDK) deploy --all \
+			--require-approval never \
+			--outputs-file ../cdk-outputs.json
+	@echo "Outputs guardados en: cdk-outputs.json"
+	@cat cdk-outputs.json 2>/dev/null || echo "No se generó cdk-outputs.json"
 
 destroy: ## Destruir stack de LocalStack
 	@echo "Destruyendo stack"
@@ -172,3 +180,20 @@ bump: ## Incrementar versión automáticamente (commitizen)
 
 version: ## Mostrar versión actual
 	@poetry version -s
+
+
+.PHONY: build-lambda
+build-lambda:  ## Build Lambda package with dependencies
+	@echo "Building Lambda bundle..."
+	@rm -rf .build/bundle
+	@mkdir -p .build/bundle
+	@pip install \
+		'aws-lambda-powertools[pydantic]==2.30.2' \
+		pydantic==2.7.4 \
+		-t .build/bundle \
+		--upgrade \
+		--quiet
+	@cp -r backend/functions .build/bundle/
+	@cp -r backend/models .build/bundle/
+	@cp -r backend/shared .build/bundle/
+	@echo "✅ Lambda bundle ready"

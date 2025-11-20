@@ -1,0 +1,8 @@
+{
+  "TodoStack": {
+    "ApiUrl": "https://ruyhoui8zl.execute-api.localhost.localstack.cloud:4566/prod/",
+    "TodoApiEndpointC1E16B6C": "https://ruyhoui8zl.execute-api.localhost.localstack.cloud:4566/prod/",
+    "UserPoolClientId": "unknown",
+    "UserPoolId": "unknown"
+  }
+}
