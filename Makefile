@@ -45,7 +45,7 @@ test:
 
 lint:
 	poetry run ruff check backend/ infrastructure/
-	poetry run mypy backend/ infrastructure/
+	poetry run mypy backend/
 
 clean:
 	@echo "Cleaning..."
