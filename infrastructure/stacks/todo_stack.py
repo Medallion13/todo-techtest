@@ -12,6 +12,10 @@ from aws_cdk import (
 )
 from constructs import Construct
 
+# ARN de la Layer pública de Powertools para Python 3.12
+# Ref: https://docs.powertools.aws.dev/lambda/python/latest/#lambda-layer
+POWERTOOLS_LAYER_ARN = "arn:aws:lambda:us-east-1:017000801446:layer:AWSLambdaPowertoolsPythonV2:78"
+
 
 class TodoStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
@@ -125,6 +129,7 @@ class TodoStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="functions.tasks.create.handler",
             code=lambda_.Code.from_asset(str(bundle_path)),
+            layers=[lambda_.LayerVersion.from_layer_version_arn(self, "PowertoolsLayer", POWERTOOLS_LAYER_ARN)],
             environment={
                 "TABLE_NAME": table.table_name,
                 "POWERTOOLS_SERVICE_NAME": "todo-api",
@@ -170,4 +175,12 @@ class TodoStack(Stack):
             value=self.api.url,
             description="API Gateway URL",
             export_name="TodoApiUrl",
+        )
+
+        CfnOutput(
+            self,
+            "Region",
+            value=self.region,
+            description="AWS Region",
+            export_name="TodoRegion",
         )

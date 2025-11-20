@@ -1,8 +1,9 @@
 {
   "TodoStack": {
-    "ApiUrl": "https://ruyhoui8zl.execute-api.localhost.localstack.cloud:4566/prod/",
-    "TodoApiEndpointC1E16B6C": "https://ruyhoui8zl.execute-api.localhost.localstack.cloud:4566/prod/",
-    "UserPoolClientId": "unknown",
-    "UserPoolId": "unknown"
+    "TodoApiEndpointC1E16B6C": "https://65czwklzp5.execute-api.us-east-1.amazonaws.com/prod/",
+    "UserPoolClientId": "1594ajoc7doap29hihdj1iun2l",
+    "UserPoolId": "us-east-1_efDBuw1dl",
+    "ApiUrl": "https://65czwklzp5.execute-api.us-east-1.amazonaws.com/prod/",
+    "Region": "us-east-1"
   }
 }
