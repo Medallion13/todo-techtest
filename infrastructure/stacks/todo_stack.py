@@ -118,19 +118,24 @@ class TodoStack(Stack):
 
         self.api = api
 
-        # force api deployment
-        # api.deployment_stage = apigateway.Stage(
-        #     self,
-        #     "ProdStage",
-        #     stage_name="prod",
-        #     deployment=api.latest_deployment,  # type: ignore
-        # )
+        # ========================================================================================================
+        # Cognito authoraizer
+        authoraizer = apigateway.CognitoUserPoolsAuthorizer(
+            self,
+            "TodoAuthoraizer",
+            cognito_user_pools=[self.user_pool],
+            authorizer_name="CognitoAuthorizer",
+            identity_source="method.request.header.Authorization",
+        )
+
+        self.authoraizer = authoraizer
 
         task_resource = self.api.root.add_resource("tasks")
 
         # ========================================================================================================
-        # Task create Lambda Function (with bundled dependencies)
+        # Task Lambdas Function (with bundled dependencies)
 
+        # create
         bundle_path = Path(__file__).parent.parent.parent / ".build" / "bundle"
 
         powertools_layer = lambda_.LayerVersion.from_layer_version_arn(
@@ -157,12 +162,40 @@ class TodoStack(Stack):
         )
 
         # Grant DynamoDB permissions
-        table.grant_write_data(create_task_fn)
+        table.grant_read_write_data(create_task_fn)
 
         # API Integration
         task_resource.add_method(
             "POST",
             apigateway.LambdaIntegration(create_task_fn),  # type: ignore
+            authorizer=self.authoraizer,
+        )
+
+        # List task
+        list_tasks_fn = lambda_.Function(
+            self,
+            "ListTasksFunction",
+            function_name="todo-list-tasks",
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            handler="functions.tasks.list.handler",
+            code=lambda_.Code.from_asset(str(bundle_path)),
+            layers=[powertools_layer],
+            environment={
+                "TABLE_NAME": table.table_name,
+                "POWERTOOLS_SERVICE_NAME": "todo-api",
+                "LOG_LEVEL": "INFO",
+            },
+            timeout=Duration.seconds(10),
+            memory_size=256,
+        )
+
+        table.grant_read_data(list_tasks_fn)
+
+        # API Integration
+        task_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(list_tasks_fn),  # type: ignore
+            authorizer=self.authoraizer,
         )
 
         # ========================================================================================================

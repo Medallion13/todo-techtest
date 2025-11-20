@@ -28,8 +28,18 @@ def create_task() -> dict[str, Any]:
         # Crear ID
         now = datetime.now(UTC)
 
-        # TODO transform into a correct user id
-        user_id = "test_user"
+        # exrtact user_id from cognito
+        try:
+            auth_data = app.current_event.request_context.authorizer.claims
+            user_id = auth_data.get("sub")
+
+            if not user_id:
+                logger.error("User ID not found in token claims")
+                return error_response("Unauthorized - Invalid token", 401)
+
+        except AttributeError:
+            logger.warning("No authorizer found - using test user")
+            user_id = "test_user"
 
         generated_task_id = str(uuid.uuid4())
 
