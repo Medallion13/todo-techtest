@@ -10,7 +10,6 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_lambda as lambda_,
 )
-from aws_cdk.custom_resources import AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId
 from constructs import Construct
 
 # ARN de la Layer pública de Powertools para Python 3.12
