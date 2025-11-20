@@ -71,3 +71,11 @@ secrets.json
 credentials.json
 *.pem
 *.key
+
+# LocalStack
+.localstack/
+localstack_data/
+
+# Lambda Layers & Builds
+*.zip
+backend/functions/**/.build/
