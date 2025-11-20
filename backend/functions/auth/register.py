@@ -13,7 +13,7 @@ cognito_client = boto3.client("cognito-idp")
 user_pool_id = os.getenv("USER_POOL_ID", "")
 
 
-@app.post("/register")
+@app.post("/auth/register")
 def register_user() -> dict[str, Any]:
     """Register a new user in cognito"""
     try:

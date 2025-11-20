@@ -13,7 +13,7 @@ cognito_client = boto3.client("cognito-idp")
 client_id = os.getenv("USER_POOL_CLIENT_ID", "")
 
 
-@app.post("/login")
+@app.post("/auth/login")
 def login_user() -> dict[str, Any]:
     """login flow with cognito"""
 

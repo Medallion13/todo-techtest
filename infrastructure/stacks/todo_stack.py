@@ -10,6 +10,7 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_lambda as lambda_,
 )
+from aws_cdk.custom_resources import AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId
 from constructs import Construct
 
 # ARN de la Layer pública de Powertools para Python 3.12
@@ -85,9 +86,11 @@ class TodoStack(Stack):
             auth_flows=cognito.AuthFlow(
                 user_password=True,  # Usuario + contraseña
                 user_srp=True,  # Secure Remote Password (más seguro)
+                admin_user_password=True,
             ),
             # NO generar client secret (SPAs no pueden mantenerlo secreto)
             generate_secret=False,
+            prevent_user_existence_errors=True,
         )
 
         self.user_pool_client = user_pool_client
@@ -115,12 +118,27 @@ class TodoStack(Stack):
         )
 
         self.api = api
+
+        # force api deployment
+        # api.deployment_stage = apigateway.Stage(
+        #     self,
+        #     "ProdStage",
+        #     stage_name="prod",
+        #     deployment=api.latest_deployment,  # type: ignore
+        # )
+
         task_resource = self.api.root.add_resource("tasks")
 
         # ========================================================================================================
-        # Lambda Function (with bundled dependencies)
+        # Task create Lambda Function (with bundled dependencies)
 
         bundle_path = Path(__file__).parent.parent.parent / ".build" / "bundle"
+
+        powertools_layer = lambda_.LayerVersion.from_layer_version_arn(
+            self,
+            "PowertoolsLayer",  # ← Solo se crea UNA vez aquí
+            POWERTOOLS_LAYER_ARN,
+        )
 
         create_task_fn = lambda_.Function(
             self,
@@ -129,7 +147,7 @@ class TodoStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="functions.tasks.create.handler",
             code=lambda_.Code.from_asset(str(bundle_path)),
-            layers=[lambda_.LayerVersion.from_layer_version_arn(self, "PowertoolsLayer", POWERTOOLS_LAYER_ARN)],
+            layers=[powertools_layer],
             environment={
                 "TABLE_NAME": table.table_name,
                 "POWERTOOLS_SERVICE_NAME": "todo-api",
@@ -142,12 +160,72 @@ class TodoStack(Stack):
         # Grant DynamoDB permissions
         table.grant_write_data(create_task_fn)
 
-        # ========================================================================================================
         # API Integration
-
         task_resource.add_method(
             "POST",
             apigateway.LambdaIntegration(create_task_fn),  # type: ignore
+        )
+
+        # ========================================================================================================
+        # auth Lambda Functions (with bundled dependencies)
+
+        # register lambda
+        register_fn = lambda_.Function(
+            self,
+            "RegisterFunction",
+            function_name="todo-register",
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            handler="functions.auth.register.handler",
+            code=lambda_.Code.from_asset(str(bundle_path)),
+            layers=[powertools_layer],
+            environment={
+                "USER_POOL_ID": user_pool.user_pool_id,
+                "POWERTOOLS_SERVICE_NAME": "todo-api",
+                "LOG_LEVEL": "INFO",
+            },
+            timeout=Duration.seconds(10),
+            memory_size=256,
+        )
+
+        user_pool.grant(register_fn, "cognito-idp:AdminCreateUser", "cognito-idp:AdminSetUserPassword")
+
+        # Lambda Login
+        login_fn = lambda_.Function(
+            self,
+            "LoginFunction",
+            function_name="todo-login",
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            handler="functions.auth.login.handler",
+            code=lambda_.Code.from_asset(str(bundle_path)),
+            layers=[powertools_layer],
+            environment={
+                "USER_POOL_CLIENT_ID": user_pool_client.user_pool_client_id,
+                "POWERTOOLS_SERVICE_NAME": "todo-api",
+                "LOG_LEVEL": "INFO",
+            },
+            timeout=Duration.seconds(10),
+            memory_size=256,
+        )
+
+        user_pool.grant(login_fn, "cognito-idp:InitiateAuth")
+
+        # ========================================================================================================
+        # auth resource
+        auth_resource = self.api.root.add_resource("auth")
+
+        # ========================================================================================================
+        # Auth endpoints
+
+        register_resource = auth_resource.add_resource("register")
+        register_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(register_fn),  # type: ignore
+        )
+
+        login_resource = auth_resource.add_resource("login")
+        login_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(login_fn),  # type: ignore
         )
 
         # ========================================================================================================
