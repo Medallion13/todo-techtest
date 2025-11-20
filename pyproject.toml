@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "DDD-Lite Serverless App on LocalStack"
 authors = ["Medallion13 <nickcar13@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "backend" }, { include = "infrastructure" }]
+packages = [{ include = "backend" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
