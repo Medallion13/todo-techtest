@@ -38,22 +38,6 @@ version_provider = "poetry"
 update_changelog_on_bump = true
 major_version_zero = true
 
-allowed_prefixes = [
-    "feat",
-    "fix",
-    "docs",
-    "style",
-    "refactor",
-    "perf",
-    "test",
-    "chore",
-    "ci",
-]
-
-# Patrón de validación simple
-[tool.commitizen.customize]
-schema_pattern = "^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\\(\\w+\\))?!?:\\s.+"
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
