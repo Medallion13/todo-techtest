@@ -111,15 +111,15 @@ class TodoStack(Stack):
         # ========================================================================================================
         # Cognito Authorizer for API
 
-        authorizer = apigateway.CognitoUserPoolsAuthorizer(
-            self,
-            "TODOAuthorizer",
-            cognito_user_pools=[self.user_pool],
-            authorizer_name="CognitoAuthorizer",
-            identity_source="method.request.header.Authorization",
-        )
+        # authorizer = apigateway.CognitoUserPoolsAuthorizer(
+        #     self,
+        #     "TODOAuthorizer",
+        #     cognito_user_pools=[self.user_pool],
+        #     authorizer_name="CognitoAuthorizer",
+        #     identity_source="method.request.header.Authorization",
+        # )
 
-        self.authorizer = authorizer
+        # self.authorizer = authorizer
 
         # ========================================================================================================
         # TODO Endpoint placeholder for first deploy
@@ -134,15 +134,15 @@ class TodoStack(Stack):
                 integration_responses=[
                     apigateway.IntegrationResponse(
                         status_code="200",
-                        response_templates={"application/json": '{"message": "Endpoint not implemented yet"}'},
+                        response_templates={
+                            "application/json": '{"message": "Tasks endpoint ready. Lambdas pending Story 1.3"}'
+                        },
                     )
                 ],
                 passthrough_behavior=apigateway.PassthroughBehavior.NEVER,
                 request_templates={"application/json": '{"statusCode": 200}'},
             ),
             method_responses=[apigateway.MethodResponse(status_code="200")],
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
         )
 
         # ========================================================================================================

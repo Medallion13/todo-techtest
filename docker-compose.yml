@@ -1,5 +1,3 @@
-version: "3.8" # Versión del formato de docker-compose
-
 services:
   localstack:
     container_name: localstack-todo-app
@@ -9,7 +7,7 @@ services:
       - "4566:4566"
 
     environment:
-      - SERVICES=dynamodb,cognito-idp,lambda,apigateway,iam,sts,logs
+      - SERVICES=dynamodb,cognito-idp,lambda,apigateway,iam,sts,logs, cloudformation, ssm, s3
       # dynamodb: Base de datos NoSQL
       # cognito-idp: Identity Provider (autenticación usuarios)
       # lambda: Funciones serverless
