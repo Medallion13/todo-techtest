@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useAuth } from './contexts/AuthContext';
-import { LoginForm } from './components/auth/LoginForm';
-import { RegisterForm } from './components/auth/RegisterForm';
+import { useState } from "react";
+import { useAuth } from "./contexts/AuthContext";
+import { LoginForm } from "./components/auth/LoginForm";
+import { RegisterForm } from "./components/auth/RegisterForm";
 
 function App() {
   const { isAuthenticated, email, logout } = useAuth();
@@ -34,15 +34,17 @@ function App() {
     <div className="min-h-screen bg-gray-100 py-12 px-4">
       <div className="max-w-md mx-auto">
         <h1 className="text-4xl font-bold text-center mb-8">Todo App</h1>
-        
+
         {showRegister ? <RegisterForm /> : <LoginForm />}
-        
+
         <div className="text-center mt-4">
           <button
             onClick={() => setShowRegister(!showRegister)}
             className="text-blue-500 hover:text-blue-700"
           >
-            {showRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
+            {showRegister
+              ? "Already have an account? Login"
+              : "Don't have an account? Register"}
           </button>
         </div>
       </div>

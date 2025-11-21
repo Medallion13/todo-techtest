@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 
-def success_response(data: dict[str, Any], status_code: int = 200) -> dict[str, Any]:
+def success_response(data: Any, status_code: int = 200) -> dict[str, Any]:
     """
     Genera respuesta exitosa estandarizada para API Gateway.
 
@@ -17,10 +17,11 @@ def success_response(data: dict[str, Any], status_code: int = 200) -> dict[str, 
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "http://localhost:5173",  # CORS
-            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
         },
-        "body": json.dumps(data, ensure_ascii=False),  # ensure_ascii para UTF-8
+        "body": json.dumps(data) if not isinstance(data, str) else data,  # ensure_ascii para UTF-8
     }
 
 
@@ -39,7 +40,9 @@ def error_response(message: str, status_code: int = 500) -> dict[str, Any]:
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "http://localhost:5173",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
         },
         "body": json.dumps({"error": message}, ensure_ascii=False),
     }
