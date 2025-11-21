@@ -1,9 +1,9 @@
 export const API_CONFIG = {
-  BASE_URL: 'https://65czwklzp5.execute-api.us-east-1.amazonaws.com/prod',
+  BASE_URL: "https://65czwklzp5.execute-api.us-east-1.amazonaws.com/prod",
   ENDPOINTS: {
-    REGISTER: '/auth/register',
-    LOGIN: '/auth/login',
-    TASKS: '/tasks',
+    REGISTER: "/auth/register",
+    LOGIN: "/auth/login",
+    TASKS: "/tasks",
   },
 };
 
@@ -12,15 +12,19 @@ export const apiRequest = async (
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> => {
-  const token = localStorage.getItem('token');
-  
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+  const token = localStorage.getItem("token");
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
   };
 
+  // Agregar headers custom si existen
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
+
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
@@ -29,14 +33,14 @@ export const apiRequest = async (
   });
 
   const data = await response.json();
-  
+
   // API Gateway devuelve {statusCode, body}
-  if (data.body && typeof data.body === 'string') {
+  if (data.body && typeof data.body === "string") {
     return {
       ...data,
       body: JSON.parse(data.body),
     };
   }
-  
+
   return data;
 };

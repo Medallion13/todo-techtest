@@ -6,9 +6,13 @@ from aws_cdk import (
     RemovalPolicy,
     Stack,
     aws_apigateway as apigateway,
+    aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
     aws_cognito as cognito,
     aws_dynamodb as dynamodb,
     aws_lambda as lambda_,
+    aws_s3 as s3,
+    aws_s3_deployment as s3_deploy,
 )
 from constructs import Construct
 
@@ -103,16 +107,10 @@ class TodoStack(Stack):
             description="API for To-Do app",
             # default cors configuration
             default_cors_preflight_options=apigateway.CorsOptions(
-                allow_origins=["http://localhost:5173"],  # future vite dev server deployment
+                allow_origins=["*"],
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                allow_headers=[
-                    "Content-Type",
-                    "Authorization",
-                    "X-Amz-Date",
-                    "X-Api-Key",
-                    "X-Amz-Security-Token",
-                ],
-                allow_credentials=True,
+                allow_headers=["Content-Type", "Authorization"],
+                allow_credentials=False,
             ),
         )
 
@@ -261,6 +259,69 @@ class TodoStack(Stack):
         )
 
         # ========================================================================================================
+        # ============================================FRONTEND====================================================
+        # ========================================================================================================
+
+        # ========================================================================================================
+        # S3 Bucket para Frontend
+
+        frontend_bucket = s3.Bucket(
+            self,
+            "FrontendBucket",
+            bucket_name=f"todo-app-frontend-{self.account}",
+            public_read_access=False,  # ← CloudFront accederá
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,  # ← Más seguro
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+        )
+
+        # Origin Access Identity para CloudFront
+        oai = cloudfront.OriginAccessIdentity(self, "OAI", comment="OAI for Todo App Frontend")
+
+        frontend_bucket.grant_read(oai)
+
+        # CloudFront Distribution
+        distribution = cloudfront.Distribution(
+            self,
+            "FrontendDistribution",
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.S3Origin(
+                    frontend_bucket,
+                    origin_access_identity=oai,
+                ),
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+                cached_methods=cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
+                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+            ),
+            default_root_object="index.html",
+            error_responses=[
+                cloudfront.ErrorResponse(
+                    http_status=404,
+                    response_page_path="/index.html",
+                    response_http_status=200,
+                ),
+                cloudfront.ErrorResponse(
+                    http_status=403,
+                    response_page_path="/index.html",
+                    response_http_status=200,
+                ),
+            ],
+        )
+
+        # Deploy del frontend build
+        s3_deploy.BucketDeployment(
+            self,
+            "DeployFrontend",
+            sources=[s3_deploy.Source.asset("../frontend/dist")],
+            destination_bucket=frontend_bucket,
+            distribution=distribution,
+            distribution_paths=["/*"],
+        )
+
+        cloudfront_url = f"https://{distribution.distribution_domain_name}"
+
+        # ========================================================================================================
         # Output for env and front
 
         CfnOutput(
@@ -293,4 +354,19 @@ class TodoStack(Stack):
             value=self.region,
             description="AWS Region",
             export_name="TodoRegion",
+        )
+
+        CfnOutput(
+            self,
+            "FrontendUrl",
+            value=cloudfront_url,
+            description="CloudFront Frontend URL (HTTPS)",
+            export_name="TodoFrontendUrl",
+        )
+
+        CfnOutput(
+            self,
+            "CloudFrontDistributionId",
+            value=distribution.distribution_id,
+            description="CloudFront Distribution ID",
         )

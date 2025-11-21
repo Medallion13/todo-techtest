@@ -4,6 +4,8 @@
     "UserPoolClientId": "1594ajoc7doap29hihdj1iun2l",
     "UserPoolId": "us-east-1_efDBuw1dl",
     "ApiUrl": "https://65czwklzp5.execute-api.us-east-1.amazonaws.com/prod/",
-    "Region": "us-east-1"
+    "CloudFrontDistributionId": "E1W6UNG5J6D2V",
+    "Region": "us-east-1",
+    "FrontendUrl": "https://d3lpi69mz9zatn.cloudfront.net"
   }
 }
